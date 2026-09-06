@@ -34,9 +34,11 @@ const login = async (req, res) => {
   });
   ApiResponse.ok(`welcome back, ${userObject.username}!`, userObject);
 };
-const logout = async (req, res) => {
-  res.clearCookie('token');
-  ApiResponse.ok('User logged out successfully', null);
+const logout = async (_, res) => {
+  res.clearCookie('token', '', {
+    maxAge: 0,
+  });
+  ApiResponse.ok('You have been logged out successfully', null);
 };
 
-export { register, login };
+export { register, login, logout };
