@@ -41,4 +41,14 @@ const logout = async (_, res) => {
   ApiResponse.ok('You have been logged out successfully', null);
 };
 
-export { register, login, logout };
+const getMe = async (req, res) => {
+  const user = req.user;
+  if (!user) {
+    throw APIError.unauthorized('User not authenticated');
+  }
+  const userObject = user.toObject();
+  delete userObject.password;
+  ApiResponse.ok('profile retrieved successfully', userObject);
+};
+
+export { register, login, logout, getMe };
