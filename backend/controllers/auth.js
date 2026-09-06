@@ -13,5 +13,30 @@ const register = async (req, res) => {
   delete userObject.password;
   ApiResponse.created('User registered successfully', userObject);
 };
+const login = async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw APIError.unauthorized('Invalid email or password');
+  }
+  const isPasswordValid = await user.comparePassword(password);
+  if (!isPasswordValid) {
+    throw APIError.unauthorized('Invalid email or password');
+  }
+  const userObject = user.toObject();
+  delete userObject.password;
+  const token = user.generateJWT();
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // Set to true in production
+    sameSite: 'strict', // Adjust based on your frontend domain
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+  ApiResponse.ok(`welcome back, ${userObject.username}!`, userObject);
+};
+const logout = async (req, res) => {
+  res.clearCookie('token');
+  ApiResponse.ok('User logged out successfully', null);
+};
 
-export { register };
+export { register, login };
