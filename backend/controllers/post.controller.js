@@ -3,6 +3,7 @@ import { Post } from '../models/post.model.js';
 import { User } from '../models/user.model.js';
 import { ApiResponse, sendResponse } from '../utils/apiResponse.js';
 import cloudinary from '../utils/cloudinary.js';
+import { Comment } from '../models/comment.model.js';
 
 const addNewPost = async (req, res) => {
   const { caption } = req.body;
@@ -81,4 +82,128 @@ const getUserPost = async (req, res) => {
     .sort({ createdAt: -1 });
   sendResponse(res, ApiResponse.ok('Posts retrieved successfully', post));
 };
-export { addNewPost, getAllPosts, getUserPost };
+
+const likeOrDislikePost = async (req, res) => {
+  const postId = req.params.id;
+  const userId = req.user._id;
+
+  const post = await Post.findById(postId);
+  if (!post) {
+    throw APIError.notFound('Post not found');
+  }
+
+  const isLiked = post.likes.includes(userId);
+  if (isLiked) {
+    post.likes.pull(userId);
+  } else {
+    post.likes.push(userId);
+  }
+  // implement socket io logic here to notify the post author about the like/unlike action
+  await post.save();
+  sendResponse(res, ApiResponse.ok('Post like status updated successfully', { likes: post.likes }));
+};
+
+const addCommentToPost = async (req, res) => {
+  const postId = req.params.id;
+  const userId = req.user._id;
+  const { text } = req.body;
+  if (!text) {
+    throw APIError.badRequest('Comment text is required');
+  }
+  const post = await Post.findById(postId);
+  if (!post) {
+    throw APIError.notFound('Post not found');
+  }
+
+  const comment = await Comment.create({
+    text,
+    author: userId,
+    post: postId,
+  });
+  await comment.populate('author', 'username profilePicture');
+  await post.comments.push(comment._id);
+  await post.save();
+  sendResponse(res, ApiResponse.created('Comment added successfully', comment));
+};
+
+const getCommentsForPost = async (req, res) => {
+  const postId = req.params.id;
+  const post = await Post.findById(postId);
+  if (!post) {
+    throw APIError.notFound('Post not found');
+  }
+  const comments = await Comment.find({ post: postId })
+    .populate('author', 'username profilePicture')
+    .sort({ createdAt: -1 });
+  if (!comments || comments.length === 0) {
+    return sendResponse(res, ApiResponse.ok('No comments found for this post', []));
+  }
+  sendResponse(res, ApiResponse.ok('Comments retrieved successfully', comments));
+};
+
+// delete post logic
+const deletePost = async (req, res) => {
+  const postId = req.params.id;
+  const userId = req.user._id;
+
+  const post = await Post.findById(postId);
+  if (!post) {
+    throw APIError.notFound('Post not found');
+  }
+
+  if (post.author.toString() !== userId.toString()) {
+    throw APIError.forbidden('You are not authorized to delete this post');
+  }
+
+  await Post.findByIdAndDelete(postId);
+  await User.findByIdAndUpdate(userId, { $pull: { posts: postId } });
+  await Comment.deleteMany({ post: postId });
+  sendResponse(res, ApiResponse.ok('Post deleted successfully', null));
+};
+
+const bookmarkPost = async (req, res) => {
+  const postId = req.params.id;
+  const userId = req.user._id;
+
+  const post = await Post.findById(postId);
+  if (!post) {
+    throw APIError.notFound('Post not found');
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw APIError.notFound('User not found');
+  }
+
+  const isBookmarked = user.bookmarks.includes(postId);
+  if (isBookmarked) {
+    await user.updateOne({ $pull: { bookmarks: postId } });
+    return sendResponse(
+      res,
+      ApiResponse.ok('Post removed from bookmarks successfully', {
+        type: 'unsaved',
+        bookmarks: user.bookmarks,
+      }),
+    );
+  } else {
+    await user.updateOne({ $push: { bookmarks: postId } });
+    return sendResponse(
+      res,
+      ApiResponse.ok('Post added to bookmarks successfully', {
+        type: 'saved',
+        bookmarks: user.bookmarks,
+      }),
+    );
+  }
+};
+
+export {
+  addNewPost,
+  getAllPosts,
+  getUserPost,
+  likeOrDislikePost,
+  addCommentToPost,
+  getCommentsForPost,
+  deletePost,
+  bookmarkPost,
+};
