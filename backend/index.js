@@ -3,6 +3,8 @@ import cors from 'cors';
 import 'dotenv/config';
 import express from 'express';
 import connectDB from './config/db.js';
+import { errorHandlerMiddleware } from './middlewares/errorHandler.js';
+import APIError from './utils/apiError.js';
 
 const app = express();
 
@@ -26,12 +28,11 @@ app.get('/healthy', (req, res) => {
   res.status(200).send('Server is all healthy and running fine');
 });
 
-app.get('/', (req, res) => {
-  res.status(200).json({
-    message: 'Welcome to the backend server!',
-    success: true,
-  });
+app.all('/*splat', (req, res, next) => {
+  throw APIError.notFound(`Can't find ${req.originalUrl} on this server!`);
 });
+
+app.use(errorHandlerMiddleware);
 const listen = async () => {
   const conn = await connectDB();
   if (conn) {
