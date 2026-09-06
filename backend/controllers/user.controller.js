@@ -34,4 +34,20 @@ const editProfile = async (req, res) => {
   ApiResponse.ok('Profile updated successfully', userObject);
 };
 
-export { getProfile, editProfile };
+// suggested user logic
+const getSuggestedUsers = async (req, res) => {
+  const user = req.user;
+  if (!user) {
+    throw APIError.unauthorized('User not authenticated');
+  }
+  const suggestedUsers = await User.find({ _id: { $ne: user._id } })
+    .select('-password')
+    .limit(10);
+  if (!suggestedUsers || suggestedUsers.length === 0) {
+    throw APIError.notFound('currently do not have any users');
+  }
+
+  ApiResponse.ok('Suggested users retrieved successfully', suggestedUsers);
+};
+
+export { getProfile, editProfile, getSuggestedUsers };
