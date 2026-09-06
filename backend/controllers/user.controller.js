@@ -1,5 +1,7 @@
+import { User } from '../models/user.model.js';
+import { ApiResponse, sendResponse } from '../utils/apiResponse.js';
 import cloudinary from '../utils/cloudinary.js';
-import getDataUri from '../utils/dataUri';
+import getDataUri from '../utils/dataUri.js';
 
 const getProfile = async (req, res) => {
   const userId = req.params.id;
@@ -9,12 +11,12 @@ const getProfile = async (req, res) => {
   }
   const userObject = user.toObject();
   delete userObject.password;
-  ApiResponse.ok('User profile retrieved successfully', userObject);
+  sendResponse(res, ApiResponse.ok('Profile retrieved successfully', userObject));
 };
 
 // edit profile
 const editProfile = async (req, res) => {
-  const user = req.user;
+  const user = await User.findById(req.user._id);
   if (!user) {
     throw APIError.unauthorized('User not authenticated');
   }
@@ -28,10 +30,12 @@ const editProfile = async (req, res) => {
   user.profilePicture = cloudResponse.secure_url || user.profilePicture;
   user.bio = bio || user.bio;
   user.gender = gender || user.gender;
+  console.log(user, 'user');
+
   await user.save();
   const userObject = user.toObject();
   delete userObject.password;
-  ApiResponse.ok('Profile updated successfully', userObject);
+  sendResponse(res, ApiResponse.ok('Profile updated successfully', userObject));
 };
 
 // suggested user logic
@@ -47,7 +51,45 @@ const getSuggestedUsers = async (req, res) => {
     throw APIError.notFound('currently do not have any users');
   }
 
-  ApiResponse.ok('Suggested users retrieved successfully', suggestedUsers);
+  sendResponse(res, ApiResponse.ok('Suggested users retrieved successfully', suggestedUsers));
 };
 
-export { getProfile, editProfile, getSuggestedUsers };
+// follow and unfollow logic
+const followOrUnfollowUser = async (req, res) => {
+  const userIdToFollow = req.params.id;
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    throw APIError.unauthorized('User not authenticated');
+  }
+
+  if (user._id.toString() === userIdToFollow) {
+    throw APIError.badRequest('You cannot follow yourself');
+  }
+
+  const userToFollow = await User.findById(userIdToFollow);
+  if (!userToFollow) {
+    throw APIError.notFound('User to follow not found');
+  }
+
+  // Check if already following
+  if (user.following.includes(userIdToFollow)) {
+    await Promise.all([
+      User.updateOne({ _id: user._id }, { $pull: { following: userIdToFollow } }),
+    ]);
+    await Promise.all([
+      User.updateOne({ _id: userIdToFollow }, { $pull: { followers: user._id } }),
+    ]);
+    return sendResponse(res, ApiResponse.ok(`You have unfollowed ${userToFollow.username}`, null));
+  }
+
+  // Add to following and followers
+  await Promise.all([
+    User.updateOne({ _id: user._id }, { $push: { following: userIdToFollow } }),
+    User.updateOne({ _id: userIdToFollow }, { $push: { followers: user._id } }),
+  ]);
+
+  sendResponse(res, ApiResponse.ok(`You are now following ${userToFollow.username}`, null));
+};
+
+export { editProfile, followOrUnfollowUser, getProfile, getSuggestedUsers };

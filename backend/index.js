@@ -2,11 +2,19 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import 'dotenv/config';
 import express from 'express';
+import morgan from 'morgan';
 import connectDB from './config/db.js';
 import { errorHandlerMiddleware } from './middlewares/errorHandler.js';
+
+import authRouter from './routes/auth.route.js';
+import userRouter from './routes/user.route.js';
 import APIError from './utils/apiError.js';
 
 const app = express();
+
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev')); // Log HTTP requests in development mode
+}
 
 // middleware
 app.use(express.json()); //parse json payload
@@ -28,18 +36,14 @@ app.get('/healthy', (req, res) => {
   res.status(200).send('Server is all healthy and running fine');
 });
 
+app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', userRouter);
+
 app.all('/*splat', (req, res, next) => {
   throw APIError.notFound(`Can't find ${req.originalUrl} on this server!`);
 });
-
 app.use(errorHandlerMiddleware);
-const listen = async () => {
-  const conn = await connectDB();
-  if (conn) {
-    app.listen(port, () => {
-      // await connectDB();
-      console.log(`Server is running on port ${port}`);
-    });
-  }
-};
-listen();
+app.listen(port, async () => {
+  await connectDB();
+  console.log(`Server is running on port ${port}`);
+});

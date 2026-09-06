@@ -9,7 +9,11 @@ const validate = (schema) => (req, res, next) => {
       Object.entries(errors).map(([field, messages]) => [field, messages.join(', ')]),
     );
 
-    throw APIError.badRequest('Validation failed', errors);
+    return res.status(400).json({
+      success: false,
+      msg: 'Validation failed',
+      errors,
+    });
   }
   req.body = results.data;
   next();

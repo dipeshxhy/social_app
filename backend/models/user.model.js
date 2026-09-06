@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
     },
     email: {
       type: String,
@@ -21,7 +22,11 @@ const userSchema = new mongoose.Schema(
     },
     profilePicture: { type: String, default: '' },
     bio: { type: String, default: '' },
-    gender: { type: String, enum: ['male', 'female', 'other'], default: 'other' },
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other', 'prefer not to say'],
+      default: 'prefer not to say',
+    },
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     posts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],

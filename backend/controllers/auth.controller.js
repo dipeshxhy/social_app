@@ -1,6 +1,6 @@
 import { User } from '../models/user.model.js';
 import APIError from '../utils/apiError.js';
-import { ApiResponse } from '../utils/apiResponse.js';
+import { ApiResponse, sendResponse } from '../utils/apiResponse.js';
 
 const register = async (req, res) => {
   const { username, email, password } = req.body;
@@ -11,7 +11,7 @@ const register = async (req, res) => {
   const user = await User.create({ username, email, password });
   const userObject = user.toObject();
   delete userObject.password;
-  ApiResponse.created('User registered successfully', userObject);
+  sendResponse(res, ApiResponse.created('User registered successfully', userObject));
 };
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -32,13 +32,13 @@ const login = async (req, res) => {
     sameSite: 'strict', // Adjust based on your frontend domain
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
-  ApiResponse.ok(`welcome back, ${userObject.username}!`, userObject);
+  sendResponse(res, ApiResponse.ok(`welcome back, ${userObject.username}!`, userObject));
 };
 const logout = async (_, res) => {
   res.clearCookie('token', '', {
     maxAge: 0,
   });
-  ApiResponse.ok('You have been logged out successfully', null);
+  sendResponse(res, ApiResponse.ok('You have been logged out successfully', null));
 };
 
 const getMe = async (req, res) => {
@@ -46,9 +46,8 @@ const getMe = async (req, res) => {
   if (!user) {
     throw APIError.unauthorized('User not authenticated');
   }
-  const userObject = user.toObject();
-  delete userObject.password;
-  ApiResponse.ok('profile retrieved successfully', userObject);
+
+  sendResponse(res, ApiResponse.ok('profile retrieved successfully', user));
 };
 
-export { register, login, logout, getMe };
+export { getMe, login, logout, register };
