@@ -65,4 +65,20 @@ const getAllPosts = async (req, res) => {
   sendResponse(res, ApiResponse.ok('Posts retrieved successfully', posts));
 };
 
-export { addNewPost, getAllPosts };
+const getUserPost = async (req, res) => {
+  const post = await Post.find({ author: req.user._id })
+    .populate('author', 'username profilePicture')
+    .populate({
+      path: 'comments',
+      sort: {
+        createdAt: -1,
+      },
+      populate: {
+        path: 'author',
+        select: 'username profilePicture',
+      },
+    })
+    .sort({ createdAt: -1 });
+  sendResponse(res, ApiResponse.ok('Posts retrieved successfully', post));
+};
+export { addNewPost, getAllPosts, getUserPost };
