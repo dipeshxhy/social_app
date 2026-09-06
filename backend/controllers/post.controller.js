@@ -1,8 +1,8 @@
 import sharp from 'sharp';
-import { ApiResponse, sendResponse } from '../utils/apiResponse.js';
-import cloudinary from '../utils/cloudinary.js';
 import { Post } from '../models/post.model.js';
 import { User } from '../models/user.model.js';
+import { ApiResponse, sendResponse } from '../utils/apiResponse.js';
+import cloudinary from '../utils/cloudinary.js';
 
 const addNewPost = async (req, res) => {
   const { caption } = req.body;
@@ -47,4 +47,22 @@ const addNewPost = async (req, res) => {
   sendResponse(res, ApiResponse.created('Post created successfully', newPost));
 };
 
-export { addNewPost };
+// get all post logic
+const getAllPosts = async (req, res) => {
+  const posts = await Post.find()
+    .populate('author', 'username profilePicture')
+    .populate({
+      path: 'comments',
+      sort: {
+        createdAt: -1,
+      },
+      populate: {
+        path: 'author',
+        select: 'username profilePicture',
+      },
+    })
+    .sort({ createdAt: -1 });
+  sendResponse(res, ApiResponse.ok('Posts retrieved successfully', posts));
+};
+
+export { addNewPost, getAllPosts };
