@@ -1,14 +1,13 @@
 import { toast } from '@/components/ui/toast';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import instance from '../utils/axios';
+import { Link, useNavigate } from 'react-router';
 
-const Signup = () => {
+const Signin = () => {
   const [input, setInput] = useState({
-    username: '',
     email: '',
     password: '',
   });
@@ -17,19 +16,19 @@ const Signup = () => {
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
   };
-  const signupHandler = async (e) => {
+  const loginHandler = async (e) => {
     e.preventDefault();
-    // Handle signup logic here
+    // Handle login logic here
     setLoading(true);
     try {
-      const resp = await instance.post('/auth/register', input);
+      const resp = await instance.post('/auth/login', input);
       if (resp.data.success) {
         toast.add({
           type: 'success',
-          title: 'Account created',
-          description: 'Your account has been created successfully.',
+          title: resp.data.msg || 'Welcome back!',
+          description: 'You have been successfully logged in.',
         });
-        navigate('/signin');
+        navigate('/');
       }
     } catch (error) {
       toast.add({
@@ -43,7 +42,6 @@ const Signup = () => {
     } finally {
       setLoading(false);
       setInput({
-        username: '',
         email: '',
         password: '',
       });
@@ -51,24 +49,12 @@ const Signup = () => {
   };
   return (
     <div className="flex items-center justify-center w-screen h-screen">
-      <form className="shadow-lg flex flex-col gap-5 p-8" onSubmit={signupHandler}>
+      <form className="shadow-lg flex flex-col gap-5 p-8" onSubmit={loginHandler}>
         <div className="my-4 text-center">
           <h1 className="text-xl font-bold">Logo</h1>
-          <p className="text-sm">Sign up to see photos and videos from your friends.</p>
+          <p className="text-sm">Sign in to see photos and videos from your friends.</p>
         </div>
-        <div>
-          <Label htmlFor="username" className="mb-1">
-            Username
-          </Label>
-          <Input
-            type="text"
-            id="username"
-            name="username"
-            placeholder="Enter your username"
-            value={input.username}
-            onChange={changeEventHandler}
-          />
-        </div>
+
         <div>
           <Label htmlFor="email" className="mb-1">
             Email
@@ -100,18 +86,18 @@ const Signup = () => {
           className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
           disabled={loading}
         >
-          {loading ? 'Signing up...' : 'Sign Up'}
+          {loading ? 'Signing in...' : 'Sign In'}
         </Button>
       </form>
       <div className="absolute bottom-4 text-center w-full">
         <p className="text-sm">
-          Already have an account?{' '}
-          <Link to="/signin" className="text-blue-500 hover:underline">
-            Sign in
+          Don't have an account?{' '}
+          <Link to="/signup" className="text-blue-500 hover:underline">
+            Sign up
           </Link>
         </p>
       </div>
     </div>
   );
 };
-export default Signup;
+export default Signin;
