@@ -19,6 +19,19 @@ import { setIO } from './utils/socket.js';
 const app = express();
 const server = createServer(app);
 
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200, // Forces clean 200 success handling for preflights
+  }),
+);
+
+app.options('*', cors());
+
+// Socket.io initialization remains identical
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -37,25 +50,13 @@ io.on('connection', (socket) => {
 });
 
 if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev')); // Log HTTP requests in development mode
+  app.use(morgan('dev'));
 }
 
-// middleware
-app.use(express.json()); //parse json payload
-app.use(cookieParser()); // parse cookies
-app.use(express.urlencoded({ extended: true })); //parse urlencoded payload
-
-// CORS middleware
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }),
-);
-
-app.options('*', cors());
+// ⚡ 2. Body and cookie parsers come AFTER CORS configuration rules
+app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
 const port = process.env.PORT || 8000;
 
@@ -63,6 +64,7 @@ app.get('/healthy', (req, res) => {
   res.status(200).send('Server is all healthy and running fine');
 });
 
+// ⚡ 3. Router logic routes follow
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/messages', messageRouter);
@@ -72,7 +74,9 @@ app.use('/api/v1/posts', postRouter);
 app.all('/*splat', (req, res, next) => {
   throw APIError.notFound(`Can't find ${req.originalUrl} on this server!`);
 });
+
 app.use(errorHandlerMiddleware);
+
 server.listen(port, async () => {
   await connectDB();
   console.log(`Server is running on port ${port}`);
