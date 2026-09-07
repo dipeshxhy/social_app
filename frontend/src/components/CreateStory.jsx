@@ -1,9 +1,10 @@
 import { ImagePlus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { cn } from 'cn';
 import instance from '../utils/axios';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Button } from './ui/button';
+import { Button, buttonVariants } from './ui/button';
 import { Dialog, DialogContent, DialogHeader } from './ui/dialog';
 import { toast } from './ui/toast';
 
@@ -117,11 +118,12 @@ const CreateStory = ({ open, setOpen, onCreated }) => {
         )}
 
         <div className="flex items-center justify-between gap-3">
-          <label htmlFor={STORY_INPUT_ID} className="cursor-pointer">
-            <Button type="button" variant="outline" className="w-fit">
-              {preview ? 'Choose another' : 'Select from device'}
-            </Button>
-          </label>
+          <label
+          htmlFor={STORY_INPUT_ID}
+          className={cn(buttonVariants({ variant: 'outline' }), 'w-fit cursor-pointer')}
+        >
+          {preview ? 'Choose another' : 'Select from device'}
+        </label>
           <Button
             type="button"
             onClick={submitHandler}

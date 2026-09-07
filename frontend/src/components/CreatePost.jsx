@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { cn } from 'cn';
 import { addPost } from '../redux/postSlice';
 import instance from '../utils/axios';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Button } from './ui/button';
+import { Button, buttonVariants } from './ui/button';
 import { Dialog, DialogContent, DialogHeader } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { toast } from './ui/toast';
@@ -110,10 +111,11 @@ const CreatePost = ({ open, setOpen }) => {
             </div>
           ) : null}
           <div className="flex items-center justify-between gap-3">
-            <label htmlFor="create-post-image-input" className="cursor-pointer">
-              <Button type="button" variant="outline" className="w-fit">
-                {image ? 'Choose another' : 'Select from device'}
-              </Button>
+            <label
+              htmlFor="create-post-image-input"
+              className={cn(buttonVariants({ variant: 'outline' }), 'w-fit cursor-pointer')}
+            >
+              {image ? 'Choose another' : 'Select from device'}
             </label>
             <Button
               type="button"
