@@ -6,6 +6,7 @@ import { setAuthUser } from '../redux/authSlice';
 import { appendComment, removePost, updatePost } from '../redux/postSlice';
 import instance from '../utils/axios';
 import CommentDialog from './CommentDialog';
+import ShareDialog from './ShareDialog';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
@@ -15,6 +16,7 @@ const Post = ({ post }) => {
   const [text, setText] = useState('');
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const dispatch = useDispatch();
@@ -22,6 +24,9 @@ const Post = ({ post }) => {
 
   const liked = post?.likes?.some((like) => (like?._id || like) === user?._id);
   const isOwnPost = post?.author?._id === user?._id;
+  const isBookmarked = (user?.bookmarks || []).some(
+    (bookmark) => (bookmark?._id || bookmark) === post?._id,
+  );
   const isFollowingAuthor = (user?.following || []).some(
     (followingId) => (followingId?._id || followingId) === post?.author?._id,
   );
@@ -134,6 +139,44 @@ const Post = ({ post }) => {
     }
   };
 
+  const bookmarkHandler = async () => {
+    const currentlyBookmarked = (user?.bookmarks || []).some(
+      (bookmark) => (bookmark?._id || bookmark) === post?._id,
+    );
+    setActionLoading(true);
+    try {
+      const resp = await instance.patch(`/posts/${post._id}/bookmark`);
+      if (resp.data.success) {
+        dispatch(
+          setAuthUser({
+            ...user,
+            bookmarks: currentlyBookmarked
+              ? (user.bookmarks || []).filter(
+                  (bookmark) => (bookmark?._id || bookmark) !== post._id,
+                )
+              : [...(user.bookmarks || []), post._id],
+          }),
+        );
+        toast.add({
+          type: 'success',
+          title: currentlyBookmarked ? 'Removed from saved' : 'Saved',
+          description: currentlyBookmarked
+            ? 'Post removed from your saved posts.'
+            : 'Post added to your saved posts.',
+        });
+      }
+    } catch (error) {
+      toast.add({
+        type: 'error',
+        title: 'Error',
+        description:
+          error.response?.data?.msg || error.message || 'Could not update bookmark.',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <div className="mb-8 w-full overflow-hidden rounded-3xl border border-white/70 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-2 px-4 py-4">
@@ -195,8 +238,14 @@ const Post = ({ post }) => {
             onClick={() => setOpen(true)}
             className="cursor-pointer hover:text-gray-600"
           />
-          <Send className="cursor-pointer hover:text-gray-600" />
-          <Bookmark className="cursor-pointer hover:text-gray-600 ml-auto" />
+          <Send
+            onClick={() => setShareOpen(true)}
+            className="cursor-pointer hover:text-gray-600"
+          />
+          <Bookmark
+            onClick={bookmarkHandler}
+            className={`cursor-pointer hover:text-gray-600 ml-auto ${isBookmarked ? 'fill-gray-900 text-gray-900' : ''}`}
+          />
         </div>
         <span className="font-medium block mb-1">{post?.likes?.length || 0} likes</span>
         <p className="text-sm leading-6 text-slate-800">
@@ -207,6 +256,7 @@ const Post = ({ post }) => {
           View all {post?.comments?.length || 0} comments
         </span>
         <CommentDialog open={open} setOpen={setOpen} post={post} />
+        <ShareDialog open={shareOpen} setOpen={setShareOpen} post={post} />
         <div className="flex items-center justify-between border-t border-gray-100 pt-3">
           <input
             type="text"

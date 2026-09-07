@@ -4,6 +4,7 @@ import { FLUSH, PAUSE, PERSIST, persistReducer, PURGE, REGISTER, REHYDRATE } fro
 import storage from 'redux-persist/lib/storage/index.js';
 import authSlice from './authSlice';
 import notificationSlice from './notificationSlice';
+import onlineSlice from './onlineSlice';
 import postSlice from './postSlice';
 
 const persistConfig = {
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   auth: authSlice,
   post: postSlice,
   notification: notificationSlice,
+  online: onlineSlice,
 });
 
 // Now rootReducer is a function, which is exactly what persistReducer needs

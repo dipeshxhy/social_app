@@ -106,9 +106,7 @@ const Profile = () => {
     }
 
     try {
-      const resp = await instance.patch('/users/profile/edit', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const resp = await instance.patch('/users/profile/edit', formData);
 
       if (resp.data.success) {
         setProfile(resp.data.data);

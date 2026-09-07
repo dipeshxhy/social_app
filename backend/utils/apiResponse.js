@@ -12,9 +12,6 @@ class ApiResponse {
   static ok(msg, data) {
     return new ApiResponse(msg, data, StatusCodes.OK);
   }
-  static conflict(msg) {
-    return new APIError(msg, StatusCodes.CONFLICT);
-  }
   static noContent(msg, data) {
     return new ApiResponse(msg, data, StatusCodes.NO_CONTENT);
   }

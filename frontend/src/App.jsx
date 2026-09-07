@@ -1,12 +1,15 @@
 import { createBrowserRouter, RouterProvider } from 'react-router';
+import AdminRoute from './components/AdminRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import {
+  Admin,
   Explore,
   Home,
   MainLayout,
   Messages,
   Notifications,
   Profile,
+  Saved,
   Search,
   Signin,
   Signup,
@@ -44,6 +47,18 @@ const router = createBrowserRouter([
       {
         path: '/explore',
         element: <Explore />,
+      },
+      {
+        path: '/saved',
+        element: <Saved />,
+      },
+      {
+        path: '/admin',
+        element: (
+          <AdminRoute>
+            <Admin />
+          </AdminRoute>
+        ),
       },
     ],
   },

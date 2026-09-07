@@ -1,8 +1,9 @@
 // middleware/validate.js
 import APIError from '../utils/apiError.js';
 
-const validate = (schema) => (req, res, next) => {
-  const results = schema.safeParse(req.body);
+const validate = (schema, source = 'body') => (req, res, next) => {
+  const data = source === 'params' ? req.params : req.body;
+  const results = schema.safeParse(data);
   if (!results.success) {
     let errors = results.error.flatten().fieldErrors;
     errors = Object.fromEntries(
@@ -15,8 +16,14 @@ const validate = (schema) => (req, res, next) => {
       errors,
     });
   }
-  req.body = results.data;
+  if (source === 'params') {
+    req.params = results.data;
+  } else {
+    req.body = results.data;
+  }
   next();
 };
+
+export const validateParams = (schema) => validate(schema, 'params');
 
 export default validate;

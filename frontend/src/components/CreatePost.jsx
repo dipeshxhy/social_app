@@ -50,9 +50,7 @@ const CreatePost = ({ open, setOpen }) => {
       formData.append('caption', caption);
       formData.append('image', image);
 
-      const resp = await instance.post('/posts', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const resp = await instance.post('/posts', formData);
 
       if (resp.data.success) {
         dispatch(addPost(resp.data.data));
@@ -112,14 +110,11 @@ const CreatePost = ({ open, setOpen }) => {
             </div>
           ) : null}
           <div className="flex items-center justify-between gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => imageRef.current?.click()}
-              className="w-fit"
-            >
-              Select from device
-            </Button>
+            <label htmlFor="create-post-image-input" className="cursor-pointer">
+              <Button type="button" variant="outline" className="w-fit">
+                {image ? 'Choose another' : 'Select from device'}
+              </Button>
+            </label>
             <Button
               type="button"
               onClick={submitHandler}
@@ -130,6 +125,7 @@ const CreatePost = ({ open, setOpen }) => {
             </Button>
           </div>
           <input
+            id="create-post-image-input"
             type="file"
             accept="image/*"
             className="hidden"

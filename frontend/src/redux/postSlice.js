@@ -10,7 +10,11 @@ const postSlice = createSlice({
       state.posts = action.payload;
     },
     addPost: (state, action) => {
-      state.posts.unshift(action.payload);
+      const incoming = action.payload;
+      const exists = state.posts.some((post) => post._id === incoming._id);
+      if (!exists) {
+        state.posts.unshift(incoming);
+      }
     },
     updatePost: (state, action) => {
       const updatedPost = action.payload;

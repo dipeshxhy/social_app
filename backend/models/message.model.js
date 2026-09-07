@@ -14,7 +14,12 @@ const messageSchema = new mongoose.Schema(
     },
     message: {
       type: String,
-      required: true,
+      default: '',
+    },
+    post: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Post',
+      default: null,
     },
   },
   { timestamps: true },

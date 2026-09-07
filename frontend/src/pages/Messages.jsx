@@ -9,6 +9,7 @@ import instance from '../utils/axios';
 
 const Messages = () => {
   const { user } = useSelector((store) => store.auth);
+  const onlineUsers = useSelector((store) => store.online.users);
   const dispatch = useDispatch();
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -87,19 +88,20 @@ const Messages = () => {
                 return [item._id, null];
               }
 
-              const senderId = lastMessage.senderId?._id || lastMessage.senderId;
+const senderId = lastMessage.senderId?._id || lastMessage.senderId;
+                  const previewText = lastMessage.post ? 'Shared a post' : lastMessage.message;
 
-              return [
-                item._id,
-                {
-                  lastMessage: lastMessage.message,
-                  lastSenderName:
-                    senderId === user._id
-                      ? 'You'
-                      : lastMessage?.senderId?.username || item.username,
-                  unread: senderId !== user._id,
-                },
-              ];
+                  return [
+                    item._id,
+                    {
+                      lastMessage: previewText,
+                      lastSenderName:
+                        senderId === user._id
+                          ? 'You'
+                          : lastMessage?.senderId?.username || item.username,
+                      unread: senderId !== user._id,
+                    },
+                  ];
             } catch {
               return [item._id, null];
             }
@@ -203,6 +205,9 @@ const Messages = () => {
                 {conversationPreviews[item._id]?.unread ? (
                   <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-rose-500" />
                 ) : null}
+                {onlineUsers.includes(item._id) ? (
+                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+                ) : null}
               </div>
               <div className="min-w-0">
                 <p className="font-medium truncate">{item.username}</p>
@@ -228,13 +233,22 @@ const Messages = () => {
         {selectedUser ? (
           <>
             <header className="flex items-center gap-3 border-b border-gray-200 bg-white/70 p-4 backdrop-blur">
-              <Avatar>
-                <AvatarImage src={selectedUser.profilePicture} alt={selectedUser.username} />
-                <AvatarFallback>{selectedUser.username?.charAt(0).toUpperCase()}</AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar>
+                  <AvatarImage src={selectedUser.profilePicture} alt={selectedUser.username} />
+                  <AvatarFallback>{selectedUser.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                {onlineUsers.includes(selectedUser._id) ? (
+                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+                ) : null}
+              </div>
               <div>
                 <h2 className="font-semibold">{selectedUser.username}</h2>
-                <p className="text-xs text-gray-500">{selectedUser.bio || 'Available to chat'}</p>
+                <p className="text-xs text-gray-500">
+                  {onlineUsers.includes(selectedUser._id)
+                    ? 'Online'
+                    : selectedUser.bio || 'Available to chat'}
+                </p>
               </div>
             </header>
 
@@ -252,6 +266,29 @@ const Messages = () => {
                       }`}
                     >
                       {message.message}
+                      {message.post ? (
+                        <div
+                          className={`mt-2 overflow-hidden rounded-2xl border ${
+                            fromMe ? 'border-white/20' : 'border-gray-100'
+                          }`}
+                        >
+                          <img
+                            src={message.post?.image}
+                            alt={message.post?.caption || 'Shared post'}
+                            className="h-40 w-full object-cover"
+                          />
+                          <div
+                            className={`p-2 text-xs ${
+                              fromMe ? 'text-white/80' : 'text-gray-600'
+                            }`}
+                          >
+                            <span className="font-medium">
+                              {message.post?.author?.username || 'Someone'}{' '}
+                            </span>
+                            {message.post?.caption || 'shared a post'}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 );

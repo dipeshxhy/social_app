@@ -1,4 +1,4 @@
-import { Heart, Home, LogOut, MessageCircle, PlusSquare, Search, TrendingUp } from 'lucide-react';
+import { Bookmark, Heart, Home, LogOut, MessageCircle, PlusSquare, Search, ShieldCheck, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
@@ -65,6 +65,12 @@ const LeftSidebar = () => {
     if (textType === 'Explore') {
       navigate('/explore');
     }
+    if (textType === 'Saved') {
+      navigate('/saved');
+    }
+    if (textType === 'Admin') {
+      navigate('/admin');
+    }
   };
   const sidebarItems = [
     {
@@ -80,6 +86,10 @@ const LeftSidebar = () => {
       text: 'Explore',
     },
     {
+      icon: <Bookmark />,
+      text: 'Saved',
+    },
+    {
       icon: <MessageCircle />,
       text: 'Messages',
     },
@@ -87,6 +97,14 @@ const LeftSidebar = () => {
       icon: <Heart />,
       text: 'Notifications',
     },
+    ...(user?.role === 'admin'
+      ? [
+          {
+            icon: <ShieldCheck />,
+            text: 'Admin',
+          },
+        ]
+      : []),
     {
       icon: <PlusSquare />,
       text: 'Create',
@@ -144,8 +162,10 @@ const LeftSidebar = () => {
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white/95 px-3 py-2 backdrop-blur md:hidden">
-        <div className="grid grid-cols-5 gap-1">
-          {sidebarItems.slice(0, 5).map((item) => (
+        <div className="grid grid-cols-6 gap-1">
+          {sidebarItems
+            .filter((item) => ['Home', 'Search', 'Explore', 'Messages', 'Saved', 'Notifications'].includes(item.text))
+            .map((item) => (
             <div
               key={item.text}
               onClick={() => sidebarHandler(item.text)}

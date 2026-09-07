@@ -31,12 +31,12 @@ const protect = async (req, res, next) => {
   }
 };
 
-// const restrictTo = (...roles) => {
-//   return (req, res, next) => {
-//     if (!roles.includes(req.user.role)) {
-//       throw APIError.forbidden('You do not have permission to perform this action');
-//     }
-//     next();
-//   };
-// };
-export { protect };
+const restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user?.role)) {
+      throw APIError.forbidden('You do not have permission to perform this action');
+    }
+    next();
+  };
+};
+export { protect, restrictTo };

@@ -28,7 +28,12 @@ const RightSidebar = () => {
           <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">
             Suggestions for you
           </h2>
-          <span className="text-xs font-medium text-gray-400">See all</span>
+          <Link
+            to="/search"
+            className="text-xs font-medium text-[#0095F6] hover:underline"
+          >
+            See all
+          </Link>
         </div>
         <div className="space-y-3">
           {suggestedUsers.slice(0, 5).map((user) => (

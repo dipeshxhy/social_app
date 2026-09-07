@@ -4,7 +4,13 @@ import APIError from '../utils/apiError.js';
 import { ApiResponse, sendResponse } from '../utils/apiResponse.js';
 import cloudinary from '../utils/cloudinary.js';
 import getDataUri from '../utils/dataUri.js';
+import { onlineUsers } from '../utils/onlineUsers.js';
 import { getIO } from '../utils/socket.js';
+
+const getOnlineUsers = async (req, res) => {
+  const userIds = [...onlineUsers.keys()];
+  sendResponse(res, ApiResponse.ok('Online users retrieved successfully', userIds));
+};
 
 const getProfile = async (req, res) => {
   const userId = req.params.id;
@@ -113,4 +119,4 @@ const followOrUnfollowUser = async (req, res) => {
   sendResponse(res, ApiResponse.ok(`You are now following ${userToFollow.username}`, null));
 };
 
-export { editProfile, followOrUnfollowUser, getProfile, getSuggestedUsers };
+export { editProfile, followOrUnfollowUser, getOnlineUsers, getProfile, getSuggestedUsers };

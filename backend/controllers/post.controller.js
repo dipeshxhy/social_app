@@ -50,6 +50,9 @@ const addNewPost = async (req, res) => {
   await newPost.populate('author', '-password');
 
   const io = getIO();
+  if (io) {
+    io.emit('post:created', newPost);
+  }
   const followers = await User.find({ following: authorId }).select('_id');
   if (followers.length > 0) {
     const notificationDocs = followers.map((follower) => ({
@@ -124,6 +127,10 @@ const likeOrDislikePost = async (req, res) => {
   await post.save();
 
   const likedPost = await Post.findById(postId).populate('author', 'username profilePicture');
+  const io = getIO();
+  if (io) {
+    io.emit('post:updated', likedPost);
+  }
   if (!isLiked && post.author.toString() !== userId.toString()) {
     const notification = await Notification.create({
       recipient: post.author,
@@ -162,6 +169,11 @@ const addCommentToPost = async (req, res) => {
   await comment.populate('author', 'username profilePicture');
   await post.comments.push(comment._id);
   await post.save();
+
+  const io = getIO();
+  if (io) {
+    io.emit('post:comment-added', { postId, comment });
+  }
 
   if (post.author.toString() !== userId.toString()) {
     const notification = await Notification.create({
@@ -213,6 +225,10 @@ const deletePost = async (req, res) => {
   await Post.findByIdAndDelete(postId);
   await User.findByIdAndUpdate(userId, { $pull: { posts: postId } });
   await Comment.deleteMany({ post: postId });
+  const io = getIO();
+  if (io) {
+    io.emit('post:deleted', postId);
+  }
   sendResponse(res, ApiResponse.ok('Post deleted successfully', null));
 };
 

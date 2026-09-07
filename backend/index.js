@@ -9,19 +9,32 @@ import connectDB from './config/db.js';
 import { errorHandlerMiddleware } from './middlewares/errorHandler.js';
 
 import authRouter from './routes/auth.route.js';
+import adminRouter from './routes/admin.route.js';
 import messageRouter from './routes/message.route.js';
 import notificationRouter from './routes/notification.route.js';
 import postRouter from './routes/post.route.js';
+import storyRouter from './routes/story.route.js';
 import userRouter from './routes/user.route.js';
 import APIError from './utils/apiError.js';
+import { onlineUsers } from './utils/onlineUsers.js';
 import { setIO } from './utils/socket.js';
 
 const app = express();
 const server = createServer(app);
 
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim());
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (server-to-server, curl, etc.)
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -34,7 +47,7 @@ app.options(/.*/, cors());
 // Socket.io initialization remains identical
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     credentials: true,
   },
 });
@@ -42,10 +55,39 @@ const io = new Server(server, {
 setIO(io);
 
 io.on('connection', (socket) => {
+  socket.joinedUsers = new Set();
+
   socket.on('join', (userId) => {
-    if (userId) {
-      socket.join(String(userId));
+    if (!userId) {
+      return;
     }
+    const key = String(userId);
+    socket.join(key);
+    socket.joinedUsers.add(key);
+
+    const wasOffline = !onlineUsers.has(key);
+    if (!onlineUsers.has(key)) {
+      onlineUsers.set(key, new Set());
+    }
+    onlineUsers.get(key).add(socket.id);
+
+    if (wasOffline) {
+      io.emit('online:changed', { userId: key, online: true });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    socket.joinedUsers?.forEach((key) => {
+      const sockets = onlineUsers.get(key);
+      if (!sockets) {
+        return;
+      }
+      sockets.delete(socket.id);
+      if (sockets.size === 0) {
+        onlineUsers.delete(key);
+        io.emit('online:changed', { userId: key, online: false });
+      }
+    });
   });
 });
 
@@ -66,10 +108,12 @@ app.get('/healthy', (req, res) => {
 
 // ⚡ 3. Router logic routes follow
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/messages', messageRouter);
 app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/posts', postRouter);
+app.use('/api/v1/stories', storyRouter);
 
 app.all('/*splat', (req, res, next) => {
   throw APIError.notFound(`Can't find ${req.originalUrl} on this server!`);

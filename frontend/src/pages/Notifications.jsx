@@ -8,6 +8,14 @@ import {
 } from '../redux/notificationSlice';
 import instance from '../utils/axios';
 
+const typeLabels = {
+  like: 'New like',
+  comment: 'New comment',
+  message: 'New message',
+  follow: 'New follower',
+  post: 'New post',
+};
+
 const Notifications = () => {
   const { items } = useSelector((store) => store.notification);
   const dispatch = useDispatch();
@@ -72,12 +80,26 @@ const Notifications = () => {
             </div>
           ) : (
             items.map((item) => (
-              <div key={item.id || item._id} className="rounded-2xl border bg-white p-4 shadow-sm">
-                <p className="font-medium">{item.title}</p>
-                <p className="mt-1 text-sm text-gray-600">{item.message}</p>
-                <p className="mt-2 text-xs text-gray-400">
-                  {item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}
-                </p>
+              <div
+                key={item.id || item._id}
+                className="flex items-start gap-3 rounded-2xl border bg-white p-4 shadow-sm"
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="pointer-events-none h-12 w-12 shrink-0 cursor-default rounded-full p-0 text-xl font-semibold uppercase text-[#0095F6]"
+                >
+                  {item.sender?.username?.charAt(0) || item.type?.charAt(0) || 'N'}
+                </Button>
+                <div className="min-w-0">
+                  <p className="font-medium">
+                    {item.title || typeLabels[item.type] || 'Notification'}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-600">{item.message}</p>
+                  <p className="mt-2 text-xs text-gray-400">
+                    {item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}
+                  </p>
+                </div>
               </div>
             ))
           )}
