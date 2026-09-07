@@ -7,14 +7,6 @@ const editUserSchema = z.object({
       errorMap: () => ({ message: 'Invalid gender value' }),
     })
     .optional(),
-  profilePicture: z
-    .string()
-    .url('Invalid URL for profile picture')
-    .refine(
-      (value) => ['image/jpeg', 'image/png', 'image/jpg'].includes(value),
-      'Image must be in JPEG, PNG, or JPG format',
-    )
-    .optional(),
 });
 
 export { editUserSchema };

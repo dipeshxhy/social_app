@@ -11,9 +11,9 @@ userRouter.route('/:id').get(protect, userController.getProfile);
 userRouter
   .route('/profile/edit')
   .patch(
-    validate(editUserSchema),
     protect,
     upload.single('profilePicture'),
+    validate(editUserSchema),
     userController.editProfile,
   );
 userRouter.route('/:id/followorunfollow').post(protect, userController.followOrUnfollowUser);

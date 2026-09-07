@@ -1,10 +1,25 @@
 import { createBrowserRouter, RouterProvider } from 'react-router';
-import { Home, MainLayout, Profile, Signin, Signup } from './pages';
+import ProtectedRoute from './components/ProtectedRoute';
+import {
+  Explore,
+  Home,
+  MainLayout,
+  Messages,
+  Notifications,
+  Profile,
+  Search,
+  Signin,
+  Signup,
+} from './pages';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <MainLayout />,
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
@@ -13,6 +28,22 @@ const router = createBrowserRouter([
       {
         path: '/profile',
         element: <Profile />,
+      },
+      {
+        path: '/messages',
+        element: <Messages />,
+      },
+      {
+        path: '/notifications',
+        element: <Notifications />,
+      },
+      {
+        path: '/search',
+        element: <Search />,
+      },
+      {
+        path: '/explore',
+        element: <Explore />,
       },
     ],
   },

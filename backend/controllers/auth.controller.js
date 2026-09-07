@@ -1,3 +1,4 @@
+import { Post } from '../models/post.model.js';
 import { User } from '../models/user.model.js';
 import APIError from '../utils/apiError.js';
 import { ApiResponse, sendResponse } from '../utils/apiResponse.js';

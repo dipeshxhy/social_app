@@ -1,12 +1,12 @@
 import { toast } from '@/components/ui/toast';
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import instance from '../utils/axios';
-import { Link, useNavigate } from 'react-router';
-import { useDispatch } from 'react-redux';
 import { setAuthUser } from '../redux/authSlice';
+import instance from '../utils/axios';
 
 const Signin = () => {
   const [input, setInput] = useState({
@@ -16,7 +16,13 @@ const Signin = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
+  const { user } = useSelector((store) => store.auth);
+
+  if (user?._id) {
+    return <Navigate to={location.state?.from || '/'} replace />;
+  }
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
   };
@@ -33,7 +39,7 @@ const Signin = () => {
           description: 'You have been successfully logged in.',
         });
         dispatch(setAuthUser(resp.data.data));
-        navigate('/');
+        navigate(location.state?.from || '/');
       }
     } catch (error) {
       if (error.response && error.response.status === 400) {

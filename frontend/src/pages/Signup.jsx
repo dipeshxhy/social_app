@@ -1,6 +1,7 @@
 import { toast } from '@/components/ui/toast';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useSelector } from 'react-redux';
+import { Link, Navigate, useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -14,8 +15,12 @@ const Signup = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-
   const navigate = useNavigate();
+  const { user } = useSelector((store) => store.auth);
+
+  if (user?._id) {
+    return <Navigate to="/" replace />;
+  }
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
   };

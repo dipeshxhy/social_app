@@ -1,9 +1,12 @@
 import sharp from 'sharp';
 import { Comment } from '../models/comment.model.js';
+import { Notification } from '../models/notification.model.js';
 import { Post } from '../models/post.model.js';
 import { User } from '../models/user.model.js';
+import APIError from '../utils/apiError.js';
 import { ApiResponse, sendResponse } from '../utils/apiResponse.js';
 import cloudinary from '../utils/cloudinary.js';
+import { getIO } from '../utils/socket.js';
 
 const addNewPost = async (req, res) => {
   const { caption } = req.body;
@@ -45,6 +48,26 @@ const addNewPost = async (req, res) => {
   await user.save();
   // populate the author field with user details
   await newPost.populate('author', '-password');
+
+  const io = getIO();
+  const followers = await User.find({ following: authorId }).select('_id');
+  if (followers.length > 0) {
+    const notificationDocs = followers.map((follower) => ({
+      recipient: follower._id,
+      sender: authorId,
+      type: 'post',
+      message: `${user.username} shared a new post.`,
+      link: `/profile?user=${authorId}`,
+      post: newPost._id,
+    }));
+    const notifications = await Notification.insertMany(notificationDocs);
+    if (io) {
+      notifications.forEach((notification) => {
+        io.to(String(notification.recipient)).emit('notification:created', notification);
+      });
+    }
+  }
+
   sendResponse(res, ApiResponse.created('Post created successfully', newPost));
 };
 
@@ -98,9 +121,25 @@ const likeOrDislikePost = async (req, res) => {
   } else {
     post.likes.push(userId);
   }
-  // implement socket io logic here to notify the post author about the like/unlike action
   await post.save();
-  sendResponse(res, ApiResponse.ok('Post like status updated successfully', { likes: post.likes }));
+
+  const likedPost = await Post.findById(postId).populate('author', 'username profilePicture');
+  if (!isLiked && post.author.toString() !== userId.toString()) {
+    const notification = await Notification.create({
+      recipient: post.author,
+      sender: userId,
+      type: 'like',
+      message: `${req.user.username} liked your post.`,
+      link: '/notifications',
+      post: postId,
+    });
+    const io = getIO();
+    if (io) {
+      io.to(String(post.author)).emit('notification:created', notification);
+    }
+  }
+
+  sendResponse(res, ApiResponse.ok('Post like status updated successfully', likedPost));
 };
 
 const addCommentToPost = async (req, res) => {
@@ -123,6 +162,22 @@ const addCommentToPost = async (req, res) => {
   await comment.populate('author', 'username profilePicture');
   await post.comments.push(comment._id);
   await post.save();
+
+  if (post.author.toString() !== userId.toString()) {
+    const notification = await Notification.create({
+      recipient: post.author,
+      sender: userId,
+      type: 'comment',
+      message: `${req.user.username} commented on your post.`,
+      link: '/notifications',
+      post: postId,
+    });
+    const io = getIO();
+    if (io) {
+      io.to(String(post.author)).emit('notification:created', notification);
+    }
+  }
+
   sendResponse(res, ApiResponse.created('Comment added successfully', comment));
 };
 

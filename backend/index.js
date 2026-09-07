@@ -3,16 +3,38 @@ import cors from 'cors';
 import 'dotenv/config';
 import express from 'express';
 import morgan from 'morgan';
+import { createServer } from 'node:http';
+import { Server } from 'socket.io';
 import connectDB from './config/db.js';
 import { errorHandlerMiddleware } from './middlewares/errorHandler.js';
 
 import authRouter from './routes/auth.route.js';
+import messageRouter from './routes/message.route.js';
+import notificationRouter from './routes/notification.route.js';
+import postRouter from './routes/post.route.js';
 import userRouter from './routes/user.route.js';
 import APIError from './utils/apiError.js';
-import messageRouter from './routes/message.route.js';
-import postRouter from './routes/post.route.js';
+import { setIO } from './utils/socket.js';
 
 const app = express();
+const server = createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173',
+    credentials: true,
+  },
+});
+
+setIO(io);
+
+io.on('connection', (socket) => {
+  socket.on('join', (userId) => {
+    if (userId) {
+      socket.join(String(userId));
+    }
+  });
+});
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev')); // Log HTTP requests in development mode
@@ -41,13 +63,14 @@ app.get('/healthy', (req, res) => {
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/messages', messageRouter);
+app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/posts', postRouter);
 
 app.all('/*splat', (req, res, next) => {
   throw APIError.notFound(`Can't find ${req.originalUrl} on this server!`);
 });
 app.use(errorHandlerMiddleware);
-app.listen(port, async () => {
+server.listen(port, async () => {
   await connectDB();
   console.log(`Server is running on port ${port}`);
 });
