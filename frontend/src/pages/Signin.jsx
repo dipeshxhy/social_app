@@ -66,7 +66,8 @@ const Signin = () => {
     <div className="flex items-center justify-center w-screen h-screen">
       <form className="shadow-lg flex flex-col gap-5 p-8" onSubmit={loginHandler}>
         <div className="my-4 text-center">
-          <h1 className="text-xl font-bold">Logo</h1>
+          <img src="/logo.png" alt="logo" className="mx-auto w-24 h-24 object-cover" />
+
           <p className="text-sm">Sign in to see photos and videos from your friends.</p>
         </div>
         {Object.keys(errors).length > 0 && (
