@@ -29,7 +29,7 @@ app.use(
   }),
 );
 
-app.options('*', cors());
+app.options(/.*/, cors());
 
 // Socket.io initialization remains identical
 const io = new Server(server, {
