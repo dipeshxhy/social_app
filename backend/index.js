@@ -46,13 +46,16 @@ app.use(cookieParser()); // parse cookies
 app.use(express.urlencoded({ extended: true })); //parse urlencoded payload
 
 // CORS middleware
-const corsOptions = {
-  origin: 'http://localhost:5173', // Replace with your frontend URL
-  credentials: true, // Allow cookies to be sent with requests,
-  allowHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
-  methods: ['GET', 'POST', 'PATCH', 'DELETE'], // Allow specific HTTP methods
-};
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }),
+);
+
+app.options('*', cors());
 
 const port = process.env.PORT || 8000;
 
