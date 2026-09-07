@@ -9,6 +9,8 @@ import { errorHandlerMiddleware } from './middlewares/errorHandler.js';
 import authRouter from './routes/auth.route.js';
 import userRouter from './routes/user.route.js';
 import APIError from './utils/apiError.js';
+import messageRouter from './routes/message.route.js';
+import postRouter from './routes/post.route.js';
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.get('/healthy', (req, res) => {
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/messages', messageRouter);
+app.use('/api/v1/posts', postRouter);
 
 app.all('/*splat', (req, res, next) => {
   throw APIError.notFound(`Can't find ${req.originalUrl} on this server!`);

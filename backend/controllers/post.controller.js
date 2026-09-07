@@ -1,9 +1,9 @@
 import sharp from 'sharp';
+import { Comment } from '../models/comment.model.js';
 import { Post } from '../models/post.model.js';
 import { User } from '../models/user.model.js';
 import { ApiResponse, sendResponse } from '../utils/apiResponse.js';
 import cloudinary from '../utils/cloudinary.js';
-import { Comment } from '../models/comment.model.js';
 
 const addNewPost = async (req, res) => {
   const { caption } = req.body;
@@ -198,12 +198,12 @@ const bookmarkPost = async (req, res) => {
 };
 
 export {
+  addCommentToPost,
   addNewPost,
+  bookmarkPost,
+  deletePost,
   getAllPosts,
+  getCommentsForPost,
   getUserPost,
   likeOrDislikePost,
-  addCommentToPost,
-  getCommentsForPost,
-  deletePost,
-  bookmarkPost,
 };

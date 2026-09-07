@@ -23,8 +23,6 @@ const login = async (req, res) => {
   if (!isPasswordValid) {
     throw APIError.unauthorized('Invalid email or password');
   }
-  const userObject = user.toObject();
-  delete userObject.password;
   const token = user.generateJWT();
   res.cookie('token', token, {
     httpOnly: true,
@@ -32,6 +30,17 @@ const login = async (req, res) => {
     sameSite: 'strict', // Adjust based on your frontend domain
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
+  const populatedPosts = await Promise.all(
+    user.posts.map(async (postId) => {
+      const post = await Post.findById(postId);
+      if (post.author.equals(user._id)) {
+        return post;
+      }
+      return null;
+    }),
+  );
+  const userObject = user.toObject();
+  delete userObject.password;
   sendResponse(res, ApiResponse.ok(`welcome back, ${userObject.username}!`, userObject));
 };
 const logout = async (_, res) => {
