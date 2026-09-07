@@ -5,6 +5,8 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import instance from '../utils/axios';
 import { Link, useNavigate } from 'react-router';
+import { useDispatch } from 'react-redux';
+import { setAuthUser } from '../redux/authSlice';
 
 const Signin = () => {
   const [input, setInput] = useState({
@@ -12,7 +14,9 @@ const Signin = () => {
     password: '',
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
   };
@@ -28,9 +32,14 @@ const Signin = () => {
           title: resp.data.msg || 'Welcome back!',
           description: 'You have been successfully logged in.',
         });
+        dispatch(setAuthUser(resp.data.data));
         navigate('/');
       }
     } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setErrors(error.response.data.errors || {});
+        return;
+      }
       toast.add({
         type: 'error',
         title: 'Error',
@@ -54,6 +63,13 @@ const Signin = () => {
           <h1 className="text-xl font-bold">Logo</h1>
           <p className="text-sm">Sign in to see photos and videos from your friends.</p>
         </div>
+        {Object.keys(errors).length > 0 && (
+          <div className="bg-red-100 text-red-700 p-2 rounded">
+            {Object.entries(errors).map(([field, message]) => (
+              <p key={field}>{message}</p>
+            ))}
+          </div>
+        )}
 
         <div>
           <Label htmlFor="email" className="mb-1">
